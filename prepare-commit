@@ -1,0 +1,115 @@
+#/usr/local/bin bash
+
+# customize these settings as a committer
+COMMITTER=nickwallen
+ORIGIN=http://github.com/nickwallen/incubator-metron
+
+# not likely to change
+WORK=~/tmp
+UPSTREAM=https://git-wip-us.apache.org/repos/asf/incubator-metron.git
+
+# retrieve the pull request identifier
+read -p "  pull request to merge: " PR
+if [ -z "$PR" ]; then
+  echo "Error: missing pr"
+  exit 1
+fi
+
+# ensure that the pull request exists
+PR_EXISTS=`curl -sI https://api.github.com/repos/apache/incubator-metron/pulls/$PR | grep Status: | sed 's/[^0-9]//g'`
+if [ "$PR_EXISTS" != "200" ]; then
+  echo "Error: pull request #$PR does not exist"
+  exit 1
+fi
+
+# use github api to retrieve the contributor's login
+USER=`curl -s https://api.github.com/repos/apache/incubator-metron/pulls/$PR | grep login | head -1 | awk -F":" '{print $2}' | sed 's/[^a-zA-Z.@]//g'`
+read -p "  github contributor's username [$USER]: " INPUT
+[ -n "$INPUT" ] && USER=$INPUT
+
+# validate the github contributor
+if [ -z "$USER" ]; then
+  echo "Error: missing username"
+  exit 1
+fi
+
+# attempt to use the github api to retrieve the user's email
+EMAIL=`curl -s https://api.github.com/users/$USER | grep email | awk -F":" '{print $2}' | sed 's/[^a-zA-Z.@]//g'`
+read -p "  github contributor's email [$EMAIL]: " INPUT
+[ -n "$INPUT" ] && EMAIL=$INPUT
+
+# validate email
+if [ -z "$EMAIL" ]; then
+  echo "Error: missing email"
+  exit 1
+fi
+
+# use the github api to retrieve the branch
+BRANCH=`curl -s https://api.github.com/repos/apache/incubator-metron/pulls/$PR | grep label | head -1 | awk -F":" '{print $3}' | sed 's/\"\,//g'`
+read -p "  github contributor's branch [$BRANCH]: " INPUT
+[ -n "$INPUT" ] && BRANCH=$INPUT
+
+# validate the branch
+if [ -z "$BRANCH" ]; then
+  exit "Error: missing branch"
+  exit 1
+fi
+
+# can we extract the JIRA from the PR title?
+JIRA=`curl -s https://api.github.com/repos/apache/incubator-metron/pulls/$PR | grep title | head -1 | egrep -o 'METRON-[0-9]+'`
+read -p "  issue identifier in jira [$JIRA]: " INPUT
+[ -n "$INPUT" ] && JIRA=$INPUT
+
+# validate the JIRA issue
+if [ -z "$JIRA" ]; then
+  echo "Error: missing jira"
+  exit 1
+fi
+
+# attempt to use the jira api to get a description of the jira
+DESC=`curl -s https://issues.apache.org/jira/si/jira.issueviews:issue-xml/$JIRA/$JIRA.xml | grep "<summary>" | sed 's/^.*<summary>//' | sed 's/<.summary>.*$//'`
+read -p "  issue description [$DESC]: " INPUT
+[ -n "$INPUT" ] && DESC=$INPUT
+
+# validate description
+if [ -z "$DESC" ]; then
+  echo "Error: missing description"
+  exit 1
+fi
+
+mkdir -p $WORK
+cd $WORK
+rm -rf $WORK/incubator-metron
+
+# clone the repository and fetch updates
+git clone $ORIGIN incubator-metron
+cd $WORK/incubator-metron
+git remote add upstream $UPSTREAM
+git fetch upstream master
+
+# update origin/master
+git checkout master
+git merge upstream/master
+git push origin master
+
+# prepare the merge and commit
+AUTHOR="$USER <$EMAIL>"
+MSG="$JIRA $DESC ($USER via $COMMITTER) closes apache/incubator-metron#$PR"
+echo ""
+read -p "use 'pr#$PR' to resolve '$JIRA' - merge '$USER/$BRANCH' - commit as '$AUTHOR'? [N/y] " REPLY
+if [[ $REPLY =~ ^[Yy]$ ]]
+then
+  # pull the contributor's branch and commit
+  echo "Ready to commit..."
+  echo ""
+  git pull --squash http://github.com/$USER/incubator-metron $BRANCH
+  git commit --author="$AUTHOR" -a -m "$MSG"
+
+  # review the commit
+  echo "Commit successfull..."
+  echo ""
+  git diff --stat --color master..upstream/master
+  git log -2
+  echo ""
+  echo "Review commit before pushing with 'git push upstream master'"
+fi
