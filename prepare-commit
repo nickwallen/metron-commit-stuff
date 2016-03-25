@@ -77,39 +77,47 @@ if [ -z "$DESC" ]; then
   exit 1
 fi
 
-mkdir -p $WORK
-cd $WORK
-rm -rf $WORK/incubator-metron
-
-# clone the repository and fetch updates
-git clone $ORIGIN incubator-metron
-cd $WORK/incubator-metron
-git remote add upstream $UPSTREAM
-git fetch upstream master
-
-# update origin/master
-git checkout master
-git merge upstream/master
-git push origin master
-
 # prepare the merge and commit
 AUTHOR="$USER <$EMAIL>"
 MSG="$JIRA $DESC ($USER via $COMMITTER) closes apache/incubator-metron#$PR"
 echo ""
-read -p "use 'pr#$PR' to resolve '$JIRA' - merge '$USER/$BRANCH' - commit as '$AUTHOR'? [N/y] " REPLY
+read -p "Use 'pr#$PR' to resolve '$JIRA' - merge '$USER/$BRANCH' - commit as '$AUTHOR'? [N/y] " REPLY
 if [[ $REPLY =~ ^[Yy]$ ]]
 then
-  # pull the contributor's branch and commit
-  echo "Ready to commit..."
+
   echo ""
+  echo "----> clone origin and fetch upstream <---- "
+  mkdir -p $WORK
+  cd $WORK
+  rm -rf $WORK/incubator-metron
+
+  # clone the repository and fetch updates
+  git clone $ORIGIN incubator-metron
+  cd $WORK/incubator-metron
+  git remote add upstream $UPSTREAM
+  git fetch upstream master
+
+  echo ""
+  echo "----> merge upstream with origin <---- "
+  # update origin/master
+  git checkout master
+  git merge upstream/master
+  git push origin master
+
+  # pull the contributor's branch and commit
+  echo ""
+  echo "----> ready to commit <----"
   git pull --squash http://github.com/$USER/incubator-metron $BRANCH
   git commit --author="$AUTHOR" -a -m "$MSG"
 
   # review the commit
-  echo "Commit successfull..."
   echo ""
+  echo "----> commit complete <----"
   git diff --stat --color master..upstream/master
   git log -2
+
   echo ""
-  echo "Review commit before pushing with 'git push upstream master'"
+  echo "Review commit carefully then run..."
+  echo "    cd $WORK/incubator-metron"
+  echo "    git push upstream master"
 fi
