@@ -1,8 +1,7 @@
 #/usr/local/bin bash
 
-# customize these settings as a committer
+# github account of committer (you!)
 COMMITTER=nickwallen
-ORIGIN=http://github.com/nickwallen/incubator-metron
 
 # not likely to change
 WORK=~/tmp
@@ -14,6 +13,14 @@ if [ -z "$PR" ]; then
   echo "Error: missing pr"
   exit 1
 fi
+
+# github account of committer
+read -p "  your github username [$COMMITTER]: "
+[ -n "$INPUT" ] && COMMITTER=$INPUT
+
+ORIGIN="http://github.com/$COMMITTER/incubator-metron"
+read -p "  your forked repo [$ORIGIN]: "
+[ -n "$INPUT" ] && ORIGIN=$INPUT
 
 # ensure that the pull request exists
 PR_EXISTS=`curl -sI https://api.github.com/repos/apache/incubator-metron/pulls/$PR | grep Status: | sed 's/[^0-9]//g'`
@@ -77,11 +84,19 @@ if [ -z "$DESC" ]; then
   exit 1
 fi
 
-# prepare the merge and commit
+# commit message
 AUTHOR="$USER <$EMAIL>"
-MSG="$JIRA $DESC ($USER via $COMMITTER) closes apache/incubator-metron#$PR"
+if [ "$USER" == "$COMMITTER" ]; then
+    MSG="$JIRA $DESC ($USER) closes apache/incubator-metron#$PR"
+else
+    MSG="$JIRA $DESC ($USER via $COMMITTER) closes apache/incubator-metron#$PR"
+fi
+read -p "  commit message [$MSG]: " INPUT
+[ -n "$INPUT" ] && MSG=$INPUT
+
+# confirm then prepare the merge and commit
 echo ""
-read -p "Use 'pr#$PR' to resolve '$JIRA' - merge '$USER/$BRANCH' - commit as '$AUTHOR'? [N/y] " REPLY
+read -p "Merge '$USER/$BRANCH' and use 'PR#$PR' to resolve '$JIRA'? [N/y] " REPLY
 if [[ $REPLY =~ ^[Yy]$ ]]
 then
 
