@@ -8,7 +8,7 @@ WORK=~/tmp
 UPSTREAM=https://git-wip-us.apache.org/repos/asf/incubator-metron.git
 
 # retrieve the pull request identifier
-read -p "  pull request to merge: " PR
+read -p "  pull request: " PR
 if [ -z "$PR" ]; then
   echo "Error: missing pr"
   exit 1
@@ -18,8 +18,8 @@ fi
 read -p "  your github username [$COMMITTER]: "
 [ -n "$INPUT" ] && COMMITTER=$INPUT
 
-ORIGIN="http://github.com/$COMMITTER/incubator-metron"
-read -p "  your forked repo [$ORIGIN]: "
+ORIGIN="http://github.com/apache/incubator-metron"
+read -p "  origin repo [$ORIGIN]: "
 [ -n "$INPUT" ] && ORIGIN=$INPUT
 
 # ensure that the pull request exists
@@ -117,7 +117,6 @@ then
   # update origin/master
   git checkout master
   git merge upstream/master
-  git push origin master
 
   # pull the contributor's branch and commit
   echo ""
