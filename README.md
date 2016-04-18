@@ -4,9 +4,9 @@
 
 This script automates the process of preparing a pull request to be merged into `apache/master`.  The script will ask for the pull request number and most of the remaining information is extracted from Github or Apache JIRA automatically.
 
-When prompted the `[value in brackets]` will be used if you simply press enter at the prompt.  If you would like to change the default value, simply type it in and hit enter when done.
+In the following example, I enter the pull request number (`80`) when prompted.   From the pull request the script can extract most of the remaining required information.
 
-In the following example, I enter the pull request number (`80`) when prompted.   From the pull request the script can extract most of the remaining required information.  In this example I also, did not like the commit message, so I overrode the default also.
+When prompted the `[value in brackets]` will be used if you simply press enter at the prompt.  If you would like to change the default value, simply type it in and hit enter when done.
 
 ```
 $ cd metron-commit-stuff
