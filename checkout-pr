@@ -1,0 +1,23 @@
+#/usr/local/bin bash
+
+ORIGIN="http://github.com/apache/incubator-metron"
+
+if [ "$#" -ne 1 ]; then
+    echo "error: missing argument"
+    echo "$0 [PULL REQUEST PR_NUMBER]"
+    exit 1
+else
+    PR_NUMBER="$1"
+fi
+
+
+# if we do not already have a cloned repo, create it
+CURR_ORIGIN=`git remote -v | grep origin | head -1 | awk '{print $2}'`
+if [ "$ORIGIN" != "$CURR_ORIGIN" ]; then
+  git clone $ORIGIN incubator-metron-pr-$PR_NUMBER
+  cd incubator-metron-pr-$PR_NUMBER
+fi
+
+# fetch the PR and switch to it
+git fetch origin pull/$PR_NUMBER/head:pr-$PR_NUMBER
+git checkout pr-$PR_NUMBER
