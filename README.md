@@ -2,14 +2,13 @@
 
 ## Prepare Commit
 
-This script automates the process of preparing a pull request to be merged into `apache/master`.  The script will ask for the pull request number and most of the remaining information is extracted from Github or Apache JIRA automatically.
+This script automates the process of merging a pull request into `apache/master`.  The script will prompt for the pull request number.  Most of the remaining information is extracted from Github or JIRA.
 
-In the following example, I enter the pull request number (`80`) when prompted.   From the pull request the script can extract most of the remaining required information.
+In the following example, I enter the pull request number (`80`) when prompted.   From the pull request number the script can extract most of the remaining required information.
 
-When prompted the `[value in brackets]` will be used if you simply press enter at the prompt.  If you would like to change the default value, simply type it in and hit enter when done.
+When prompted the `[value in brackets]` will be used if you simply press `enter` at the prompt.  If you would like to change the default value, simply type it in and hit `enter` when done.
 
 ```
-$ cd metron-commit-stuff
 $ ./prepare-commit
   pull request: 80
   your github username [nickwallen]:
@@ -83,9 +82,59 @@ Finally the script will output a summary of the changes that were made and also 
      git push upstream master
 ```
 
-To this point nothing has been committed or merged to `apache/master`.  If you are happy with the result, then simply follow the instructions.  If you are not happy, simply re-run the script.
+To this point nothing has been committed or merged to `apache/master`.  If you are happy with the result, then simply follow the instructions to push the changes.  If you are not happy, simply re-run the script.
 
 ```
 cd /Users/nallen/tmp/incubator-metron
 git push upstream master
+```
+
+## Checkout PR
+
+The `checkout-pr` script will checkout the branch for the specified pull request.  This makes it easy to checkout the code for a pull request and manually execute a test or validate the code.
+
+```
+$ ./checkout-pr 80
+Cloning into 'incubator-metron-pr-80'...
+remote: Counting objects: 7028, done.
+remote: Compressing objects: 100% (56/56), done.
+remote: Total 7028 (delta 15), reused 0 (delta 0), pack-reused 6960
+Receiving objects: 100% (7028/7028), 39.69 MiB | 9.14 MiB/s, done.
+Resolving deltas: 100% (2476/2476), done.
+Checking connectivity... done.
+remote: Counting objects: 4, done.
+remote: Compressing objects: 100% (4/4), done.
+remote: Total 4 (delta 0), reused 0 (delta 0), pack-reused 0
+Unpacking objects: 100% (4/4), done.
+From http://github.com/apache/incubator-metron
+ * [new ref]         refs/pull/80/head -> pr-80
+Switched to branch 'pr-80'
+
+$ cd incubator-metron-pr-80/
+
+$ git branch
+  master
+* pr-80
+```
+
+If you execute the command within an existing repository, then the repository will not be cloned again.
+
+```
+$ git status
+On branch master
+Your branch is up-to-date with 'origin/master'.
+nothing to commit, working directory clean
+
+$ ../checkout-pr 81
+remote: Counting objects: 77, done.
+remote: Compressing objects: 100% (51/51), done.
+remote: Total 77 (delta 10), reused 2 (delta 2), pack-reused 0
+Unpacking objects: 100% (77/77), done.
+From http://github.com/apache/incubator-metron
+ * [new ref]         refs/pull/81/head -> pr-81
+Switched to branch 'pr-81'
+
+$ git status
+On branch pr-81
+nothing to commit, working directory clean
 ```
