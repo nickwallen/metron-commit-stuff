@@ -51,17 +51,6 @@ if [ -z "$EMAIL" ]; then
   exit 1
 fi
 
-# use the github api to retrieve the branch
-BRANCH=`curl -s https://api.github.com/repos/apache/incubator-metron/pulls/$PR | grep label | head -1 | awk -F":" '{print $3}' | sed 's/\"\,//g'`
-read -p "  github contributor's branch [$BRANCH]: " INPUT
-[ -n "$INPUT" ] && BRANCH=$INPUT
-
-# validate the branch
-if [ -z "$BRANCH" ]; then
-  exit "Error: missing branch"
-  exit 1
-fi
-
 # can we extract the JIRA from the PR title?
 JIRA=`curl -s https://api.github.com/repos/apache/incubator-metron/pulls/$PR | grep title | head -1 | egrep -o 'METRON-[0-9]+'`
 read -p "  issue identifier in jira [$JIRA]: " INPUT
@@ -96,7 +85,7 @@ read -p "  commit message [$MSG]: " INPUT
 
 # confirm then prepare the merge and commit
 echo ""
-read -p "Merge '$USER/$BRANCH' and use 'PR#$PR' to resolve '$JIRA'? [N/y] " REPLY
+read -p "Use 'PR#$PR' to resolve '$JIRA'? [N/y] " REPLY
 if [[ $REPLY =~ ^[Yy]$ ]]
 then
 
@@ -121,7 +110,8 @@ then
   # pull the contributor's branch and commit
   echo ""
   echo "----> ready to commit <----"
-  git pull --squash http://github.com/$USER/incubator-metron $BRANCH
+  git pull --squash origin pull/$PR/head:pr-$PR
+  #git pull --squash http://github.com/$USER/incubator-metron $BRANCH
   git commit --author="$AUTHOR" -a -m "$MSG"
 
   # review the commit
