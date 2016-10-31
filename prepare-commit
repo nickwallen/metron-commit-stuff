@@ -1,7 +1,7 @@
 #/usr/local/bin bash
 
 # github account of committer (you!)
-COMMITTER=nickwallen
+COMMITTER=GITHUBUSER
 
 # not likely to change
 WORK=~/tmp
@@ -98,6 +98,12 @@ then
   # clone the repository and fetch updates
   git clone $ORIGIN incubator-metron
   cd $WORK/incubator-metron
+
+  # make sure your credentials are up are correct
+  git config user.name "[YOUR NAME]"
+  git config user.email YOUR APACHE ID
+
+  # add in remote
   git remote add upstream $UPSTREAM
   git fetch upstream master
 
