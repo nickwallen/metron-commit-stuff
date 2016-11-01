@@ -24,7 +24,7 @@ git checkout pr-$PR_NUMBER
 
 
 github_url="http://github.com/ottobackwards/incubator-metron"
-read -p "  origin repo [$github_url]: "
+read -p "  remote repo [$github_url]: "
 [ -n "$INPUT" ] && github_url=$INPUT
 NAME="otto"
 read -p "  remote name [$NAME]: "
