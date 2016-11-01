@@ -23,10 +23,10 @@ git fetch origin pull/$PR_NUMBER/head:pr-$PR_NUMBER
 git checkout pr-$PR_NUMBER
 
 
-github_url="http://github.com/ottobackwards/incubator-metron"
+github_url="http://github.com/YOUREPO/incubator-metron"
 read -p "  remote repo [$github_url]: "
 [ -n "$INPUT" ] && github_url=$INPUT
-NAME="otto"
+NAME="myfork"
 read -p "  remote name [$NAME]: "
 [ -n "$INPUT" ] && NAME=$INPUT
 
