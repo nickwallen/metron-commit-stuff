@@ -4,9 +4,11 @@
 
 This script automates the process of merging a pull request into `apache/master`.  The script will prompt for the pull request number.  Most of the remaining information is extracted from Github or JIRA.
 
-In the following example, I enter the pull request number (`80`) when prompted.   From the pull request number the script can extract most of the remaining required information.
+In the following example, I enter the pull request number (`80`) when prompted.   Using the pull request number, the script can extract most of the remaining required information.
 
-When prompted the `[value in brackets]` will be used if you simply press `enter` at the prompt.  If you would like to change the default value, simply type it in and hit `enter` when done.
+When prompted the `[value in brackets]` will be used by default.  To accept the default, simply press `enter`.  If you would like to change the default, type it in and hit `enter` when done.
+
+(1) Execute the script and enter the pull request number when prompted.
 
 ```
 $ ./prepare-commit
@@ -23,7 +25,7 @@ $ ./prepare-commit
 Merge 'nickwallen/METRON-111' and use 'PR#80' to resolve 'METRON-111'? [N/y] y
 ```
 
-After reviewing the information, simply enter `y` at the prompt.  This will begin the process of preparing the commit.
+(2) Review the summary and enter `y` at the prompt, if you are satisfied.  This will begin the process of preparing the commit.
 
 ```
 ----> clone origin and fetch upstream <----
@@ -59,7 +61,7 @@ Automatic merge went well; stopped before committing as requested
  ----> commit complete <----
 ```
 
-Finally the script will output a summary of the changes that were made and also the last two log messages.
+(3) After the merge is complete, the script will output a summary of the changes that were made and also the last two log messages.
 
 ```
   deployment/roles/metron_ui/tasks/main.yml | 2 +-
@@ -82,7 +84,7 @@ Finally the script will output a summary of the changes that were made and also 
      git push upstream master
 ```
 
-To this point nothing has been committed or merged to `apache/master`.  If you are happy with the result, then simply follow the instructions to push the changes.  If you are not happy, simply re-run the script.
+(4) To this point nothing has been committed or merged to `apache/master`.  If you are happy with the state of this local repo, then simply follow the instructions to push the changes.  If you are not happy, simply re-run the script.
 
 ```
 cd /Users/nallen/tmp/incubator-metron
