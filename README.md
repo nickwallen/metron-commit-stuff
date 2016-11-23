@@ -84,7 +84,7 @@ Automatic merge went well; stopped before committing as requested
      git push upstream master
 ```
 
-(4) To this point nothing has been committed or merged to `apache/master`.  If you are happy with the state of this local repo, then simply follow the instructions to push the changes.  If you are not happy, simply re-run the script.
+(4) To this point nothing has been committed or merged to `apache/master`.  If you are happy with the state of this local repo, then simply follow the instructions to push the changes to Apache.  If you are not happy, simply start over.  Nothing changes in Apache Land until you run the following command.
 
 ```
 cd /Users/nallen/tmp/incubator-metron
