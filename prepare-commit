@@ -98,6 +98,11 @@ then
   # clone the repository and fetch updates
   git clone $ORIGIN incubator-metron
   cd $WORK/incubator-metron
+
+  # setup the git user and email for your apache account
+  git config user.name "YOUR NAME as In Apache"
+  git config user.email YOU@apache.org
+
   git remote add upstream $UPSTREAM
   git fetch upstream master
 
