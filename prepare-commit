@@ -121,9 +121,14 @@ fi
 read -p "  commit message [$MSG]: " INPUT
 [ -n "$INPUT" ] && MSG=$INPUT
 
+
 # merge the contributor's branch and commit
-git merge --squash "$PR_BRANCH"; then
-git commit --author="$AUTHOR" -a -m "$MSG"
+echo ""
+if git merge --squash "$PR_BRANCH"; then
+  git commit --author="$AUTHOR" -a -m "$MSG"
+else
+  exit $?
+fi
 
 # review the commit
 echo ""
