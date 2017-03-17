@@ -1,12 +1,13 @@
 #/usr/local/bin bash
 
 # github account of committer (you!)
-COMMITTER=nickwallen
+GITHUB_NAME=nickwallen
 APACHE_NAME=nickallen
 
 # not likely to change
 WORK=~/tmp
 UPSTREAM=https://git-wip-us.apache.org/repos/asf/incubator-metron.git
+DEST_BRANCH=master
 
 # retrieve the pull request identifier
 read -p "  pull request: " PR
@@ -15,29 +16,56 @@ if [ -z "$PR" ]; then
   exit 1
 fi
 
-# github account of committer (you)
-read -p "  your github username [$COMMITTER]: " INPUT
-[ -n "$INPUT" ] && COMMITTER=$INPUT
-
-# Apache id of committer (you)
-read -p "  your Apache userid [$APACHE_NAME]: " INPUT
-[ -n "$INPUT" ] && APACHE_NAME=$INPUT
-
-# Apache email addr of committer (you)
-APACHE_EMAIL=${APACHE_NAME}@apache.org
-read -p "  your Apache email addr [$APACHE_EMAIL]: " INPUT
-[ -n "$INPUT" ] && APACHE_EMAIL=$INPUT
-
-ORIGIN="http://github.com/apache/incubator-metron"
-read -p "  origin repo [$ORIGIN]: " INPUT
-[ -n "$INPUT" ] && ORIGIN=$INPUT
-
 # ensure that the pull request exists
 PR_EXISTS=`curl -sI https://api.github.com/repos/apache/incubator-metron/pulls/$PR | grep Status: | sed 's/[^0-9]//g'`
 if [ "$PR_EXISTS" != "200" ]; then
   echo "Error: pull request #$PR does not exist"
   exit 1
 fi
+
+# origin repository
+ORIGIN="http://github.com/apache/incubator-metron"
+read -p "  origin repo [$ORIGIN]: " INPUT
+[ -n "$INPUT" ] && ORIGIN=$INPUT
+
+# github account of committer (you)
+read -p "  your github username [$GITHUB_NAME]: " INPUT
+[ -n "$INPUT" ] && GITHUB_NAME=$INPUT
+
+# apache id of committer (you)
+read -p "  your apache userid [$APACHE_NAME]: " INPUT
+[ -n "$INPUT" ] && APACHE_NAME=$INPUT
+
+# apache email addr of committer (you)
+APACHE_EMAIL=${APACHE_NAME}@apache.org
+read -p "  your apache email [$APACHE_EMAIL]: " INPUT
+[ -n "$INPUT" ] && APACHE_EMAIL=$INPUT
+
+echo ""
+mkdir -p $WORK
+cd $WORK
+rm -rf $WORK/incubator-metron
+
+# clone the repository and fetch updates
+git clone $ORIGIN incubator-metron
+cd $WORK/incubator-metron
+
+# setup the git user and email for your apache account
+git config user.name "$APACHE_NAME"
+git config user.email $APACHE_EMAIL
+
+# fetch any changes from upstream
+git remote add upstream $UPSTREAM
+git fetch upstream $DEST_BRANCH
+
+# merge any changes from upstream
+git checkout $DEST_BRANCH
+git merge upstream/$DEST_BRANCH
+
+PR_BRANCH_REF="pull/$PR/head:pr-$PR"
+PR_BRANCH="pr-$PR"
+git fetch origin $PR_BRANCH_REF
+echo ""
 
 # use github api to retrieve the contributor's login
 USER=`curl -s https://api.github.com/repos/apache/incubator-metron/pulls/$PR | grep login | head -1 | awk -F":" '{print $2}' | sed 's/[^a-zA-Z.@_-]//g'`
@@ -51,7 +79,7 @@ if [ -z "$USER" ]; then
 fi
 
 # attempt to use the github api to retrieve the user's email
-EMAIL=`curl -s https://api.github.com/users/$USER | grep email | awk -F":" '{print $2}' | sed 's/[^a-zA-Z.@]//g'`
+EMAIL=`git log $PR_BRANCH | grep Author | head -1 | awk -F"<" '{print $2}' | sed 's/[<>]//g'`
 read -p "  github contributor's email [$EMAIL]: " INPUT
 [ -n "$INPUT" ] && EMAIL=$INPUT
 
@@ -85,64 +113,27 @@ fi
 
 # commit message
 AUTHOR="$USER <$EMAIL>"
-if [ "$USER" == "$COMMITTER" ]; then
+if [ "$USER" == "$GITHUB_NAME" ]; then
     MSG="$JIRA $DESC ($USER) closes apache/incubator-metron#$PR"
 else
-    MSG="$JIRA $DESC ($USER via $COMMITTER) closes apache/incubator-metron#$PR"
+    MSG="$JIRA $DESC ($USER via $GITHUB_NAME) closes apache/incubator-metron#$PR"
 fi
 read -p "  commit message [$MSG]: " INPUT
 [ -n "$INPUT" ] && MSG=$INPUT
 
-# confirm then prepare the merge and commit
+# merge the contributor's branch and commit
+git merge --squash "$PR_BRANCH"; then
+git commit --author="$AUTHOR" -a -m "$MSG"
+
+# review the commit
 echo ""
-read -p "Use 'PR#$PR' to resolve '$JIRA'? [N/y] " REPLY
-if [[ $REPLY =~ ^[Yy]$ ]]
-then
+git diff --stat --color "$DEST_BRANCH..upstream/$DEST_BRANCH"
 
-  echo ""
-  echo "----> clone origin and fetch upstream <---- "
-  mkdir -p $WORK
-  cd $WORK
-  rm -rf $WORK/incubator-metron
+echo ""
+git show --quiet --pretty=fuller HEAD
 
-  # clone the repository and fetch updates
-  git clone $ORIGIN incubator-metron
-  cd $WORK/incubator-metron
-
-  # setup the git user and email for your apache account
-  git config user.name "$APACHE_NAME"
-  git config user.email $APACHE_EMAIL
-
-  git remote add upstream $UPSTREAM
-  git fetch upstream master
-
-  echo ""
-  echo "----> merge upstream with origin <---- "
-  # update origin/master
-  git checkout master
-  git merge upstream/master
-
-  # pull the contributor's branch and commit
-  echo ""
-  echo "----> ready to commit <----"
-  git pull --squash origin pull/$PR/head:pr-$PR
-  #git pull --squash http://github.com/$USER/incubator-metron $BRANCH
-  git commit --author="$AUTHOR" -a -m "$MSG"
-
-  # review the commit
-  echo ""
-  echo "----> commit complete <----"
-  git diff --stat --color master..upstream/master
-  git log -2
-
-  # show the commit metadata, all of which is visible in github
-  echo ""
-  echo "----> commit information, visible in github <----"
-  git show --quiet --pretty=fuller HEAD
-
-  echo ""
-  echo "Review commit carefully then run..."
-  echo "    cd $WORK/incubator-metron"
-  echo "    git push upstream master"
-  echo ""
-fi
+echo ""
+echo "Review commit carefully then run..."
+echo "    cd $WORK/incubator-metron"
+echo "    git push upstream master"
+echo ""
