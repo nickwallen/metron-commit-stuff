@@ -2,6 +2,7 @@
 
 # github account of committer (you!)
 COMMITTER=nickwallen
+APACHE_NAME=nickallen
 
 # not likely to change
 WORK=~/tmp
@@ -14,12 +15,21 @@ if [ -z "$PR" ]; then
   exit 1
 fi
 
-# github account of committer
-read -p "  your github username [$COMMITTER]: "
+# github account of committer (you)
+read -p "  your github username [$COMMITTER]: " INPUT
 [ -n "$INPUT" ] && COMMITTER=$INPUT
 
+# Apache id of committer (you)
+read -p "  your Apache userid [$APACHE_NAME]: " INPUT
+[ -n "$INPUT" ] && APACHE_NAME=$INPUT
+
+# Apache email addr of committer (you)
+APACHE_EMAIL=${APACHE_NAME}@apache.org
+read -p "  your Apache email addr [$APACHE_EMAIL]: " INPUT
+[ -n "$INPUT" ] && APACHE_EMAIL=$INPUT
+
 ORIGIN="http://github.com/apache/incubator-metron"
-read -p "  origin repo [$ORIGIN]: "
+read -p "  origin repo [$ORIGIN]: " INPUT
 [ -n "$INPUT" ] && ORIGIN=$INPUT
 
 # ensure that the pull request exists
@@ -30,7 +40,7 @@ if [ "$PR_EXISTS" != "200" ]; then
 fi
 
 # use github api to retrieve the contributor's login
-USER=`curl -s https://api.github.com/repos/apache/incubator-metron/pulls/$PR | grep login | head -1 | awk -F":" '{print $2}' | sed 's/[^a-zA-Z.@]//g'`
+USER=`curl -s https://api.github.com/repos/apache/incubator-metron/pulls/$PR | grep login | head -1 | awk -F":" '{print $2}' | sed 's/[^a-zA-Z.@_-]//g'`
 read -p "  github contributor's username [$USER]: " INPUT
 [ -n "$INPUT" ] && USER=$INPUT
 
@@ -100,8 +110,8 @@ then
   cd $WORK/incubator-metron
 
   # setup the git user and email for your apache account
-  git config user.name "YOUR NAME as In Apache"
-  git config user.email YOU@apache.org
+  git config user.name "$APACHE_NAME"
+  git config user.email $APACHE_EMAIL
 
   git remote add upstream $UPSTREAM
   git fetch upstream master
@@ -125,8 +135,14 @@ then
   git diff --stat --color master..upstream/master
   git log -2
 
+  # show the commit metadata, all of which is visible in github
+  echo ""
+  echo "----> commit information, visible in github <----"
+  git show --quiet --pretty=fuller HEAD
+
   echo ""
   echo "Review commit carefully then run..."
   echo "    cd $WORK/incubator-metron"
   echo "    git push upstream master"
+  echo ""
 fi
