@@ -106,7 +106,7 @@ if [ -z "$EMAIL" ] || [ "$EMAIL" = "null" ]; then
 fi
 
 # can we extract the JIRA from the PR title?
-JIRA=`curl -s https://api.github.com/repos/apache/incubator-metron/pulls/$PR | grep title | head -1 | egrep -o 'METRON-[0-9]+'`
+JIRA=`curl -s https://api.github.com/repos/apache/incubator-metron/pulls/$PR | grep title | head -1 | egrep -o -i 'METRON-[0-9]+' | awk '{print toupper($0)}'`
 read -p "  issue identifier in jira [$JIRA]: " INPUT
 [ -n "$INPUT" ] && JIRA=$INPUT
 
