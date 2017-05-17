@@ -22,7 +22,7 @@ APACHE_NAME=nickallen
 
 # not likely to change
 WORK=~/tmp
-UPSTREAM=https://git-wip-us.apache.org/repos/asf/incubator-metron.git
+UPSTREAM=https://git-wip-us.apache.org/repos/asf/metron.git
 DEST_BRANCH=master
 
 # retrieve the pull request identifier
@@ -33,14 +33,14 @@ if [ -z "$PR" ]; then
 fi
 
 # ensure that the pull request exists
-PR_EXISTS=`curl -sI https://api.github.com/repos/apache/incubator-metron/pulls/$PR | grep Status: | sed 's/[^0-9]//g'`
+PR_EXISTS=`curl -sI https://api.github.com/repos/apache/metron/pulls/$PR | grep Status: | sed 's/[^0-9]//g'`
 if [ "$PR_EXISTS" != "200" ]; then
   echo "Error: pull request #$PR does not exist"
   exit 1
 fi
 
 # origin repository
-ORIGIN="http://github.com/apache/incubator-metron"
+ORIGIN="http://github.com/apache/metron"
 read -p "  origin repo [$ORIGIN]: " INPUT
 [ -n "$INPUT" ] && ORIGIN=$INPUT
 
@@ -60,11 +60,11 @@ read -p "  your apache email [$APACHE_EMAIL]: " INPUT
 echo ""
 mkdir -p $WORK
 cd $WORK
-rm -rf $WORK/incubator-metron
+rm -rf $WORK/metron
 
 # clone the repository and fetch updates
-git clone $ORIGIN incubator-metron
-cd $WORK/incubator-metron
+git clone $ORIGIN metron
+cd $WORK/metron
 
 # setup the git user and email for your apache account
 git config user.name "$APACHE_NAME"
@@ -84,7 +84,7 @@ git fetch origin $PR_BRANCH_REF
 echo ""
 
 # use github api to retrieve the contributor's login
-USER=`curl -s https://api.github.com/repos/apache/incubator-metron/pulls/$PR | grep login | head -1 | awk -F":" '{print $2}' | sed 's/[^a-zA-Z.@_-]//g'`
+USER=`curl -s https://api.github.com/repos/apache/metron/pulls/$PR | grep login | head -1 | awk -F":" '{print $2}' | sed 's/[^a-zA-Z.@_-]//g'`
 read -p "  github contributor's username [$USER]: " INPUT
 [ -n "$INPUT" ] && USER=$INPUT
 
@@ -106,7 +106,7 @@ if [ -z "$EMAIL" ] || [ "$EMAIL" = "null" ]; then
 fi
 
 # can we extract the JIRA from the PR title?
-JIRA=`curl -s https://api.github.com/repos/apache/incubator-metron/pulls/$PR | grep title | head -1 | egrep -o -i 'METRON-[0-9]+' | awk '{print toupper($0)}'`
+JIRA=`curl -s https://api.github.com/repos/apache/metron/pulls/$PR | grep title | head -1 | egrep -o -i 'METRON-[0-9]+' | awk '{print toupper($0)}'`
 read -p "  issue identifier in jira [$JIRA]: " INPUT
 [ -n "$INPUT" ] && JIRA=$INPUT
 
@@ -130,9 +130,9 @@ fi
 # commit message
 AUTHOR="$USER <$EMAIL>"
 if [ "$USER" == "$GITHUB_NAME" ]; then
-    MSG="$JIRA $DESC ($USER) closes apache/incubator-metron#$PR"
+    MSG="$JIRA $DESC ($USER) closes apache/metron#$PR"
 else
-    MSG="$JIRA $DESC ($USER via $GITHUB_NAME) closes apache/incubator-metron#$PR"
+    MSG="$JIRA $DESC ($USER via $GITHUB_NAME) closes apache/metron#$PR"
 fi
 read -p "  commit message [$MSG]: " INPUT
 [ -n "$INPUT" ] && MSG=$INPUT
@@ -155,6 +155,6 @@ git show --quiet --pretty=fuller HEAD
 
 echo ""
 echo "Review commit carefully then run..."
-echo "    cd $WORK/incubator-metron"
+echo "    cd $WORK/metron"
 echo "    git push upstream master"
 echo ""
