@@ -14,13 +14,13 @@ When prompted the `[value in brackets]` will be used by default.  To accept the 
 $ ./prepare-commit
   pull request: 80
   your github username [nickwallen]:
-  origin repo [http://github.com/apache/incubator-metron]:
+  origin repo [http://github.com/apache/metron]:
   github contributor's username [nickwallen]:
   github contributor's email [nick@nickallen.org]:
   github contributor's branch [METRON-111]:
   issue identifier in jira [METRON-111]:
   issue description ['Start Metron UI' Fails When Already Started]:
-  commit message [METRON-111 'Start Metron UI' fails when already started (nickwallen) closes apache/incubator-metron#80]:
+  commit message [METRON-111 'Start Metron UI' fails when already started (nickwallen) closes apache/metron#80]:
 
 Merge 'nickwallen/METRON-111' and use 'PR#80' to resolve 'METRON-111'? [N/y] y
 ```
@@ -29,14 +29,14 @@ Merge 'nickwallen/METRON-111' and use 'PR#80' to resolve 'METRON-111'? [N/y] y
 
 ```
 ----> clone origin and fetch upstream <----
-Cloning into 'incubator-metron'...
+Cloning into 'metron'...
 remote: Counting objects: 7021, done.
 remote: Compressing objects: 100% (52/52), done.
 remote: Total 7021 (delta 12), reused 0 (delta 0), pack-reused 6957
 Receiving objects: 100% (7021/7021), 39.69 MiB | 9.18 MiB/s, done.
 Resolving deltas: 100% (2472/2472), done.
 Checking connectivity... done.
-From https://git-wip-us.apache.org/repos/asf/incubator-metron
+From https://git-wip-us.apache.org/repos/asf/metron
  * branch            master     -> FETCH_HEAD
  * [new branch]      master     -> upstream/master
 
@@ -50,11 +50,11 @@ remote: Counting objects: 7, done.
 remote: Compressing objects: 100% (4/4), done.
 remote: Total 7 (delta 1), reused 1 (delta 1), pack-reused 2
 Unpacking objects: 100% (7/7), done.
-From http://github.com/nickwallen/incubator-metron
+From http://github.com/nickwallen/metron
  * branch            METRON-111 -> FETCH_HEAD
 Squash commit -- not updating HEAD
 Automatic merge went well; stopped before committing as requested
-[master 8c901cb] METRON-111 'Start Metron UI' fails when already started (nickwallen) closes apache/incubator-metron#80
+[master 8c901cb] METRON-111 'Start Metron UI' fails when already started (nickwallen) closes apache/metron#80
  Author: nickwallen <nick@nickallen.org>
  1 file changed, 1 insertion(+), 1 deletion(-)
 
@@ -71,23 +71,23 @@ Automatic merge went well; stopped before committing as requested
  Author: nickwallen <nick@nickallen.org>
  Date:   Mon Apr 18 15:11:51 2016 -0400
 
-     METRON-111 'Start Metron UI' fails when already started (nickwallen) closes apache/incubator-metron#80
+     METRON-111 'Start Metron UI' fails when already started (nickwallen) closes apache/metron#80
 
  commit 3bc804fa227ff3152cbe5454736d8e84bc7329ce
  Author: nickwallen <nick@nickallen.org>
  Date:   Fri Apr 15 15:29:38 2016 -0400
 
-     METRON-83 Create sensor test mode (nickwallen) closes apache/incubator-metron#58
+     METRON-83 Create sensor test mode (nickwallen) closes apache/metron#58
 
  Review commit carefully then run...
-     cd /Users/nallen/tmp/incubator-metron
+     cd /Users/nallen/tmp/metron
      git push upstream master
 ```
 
 (4) To this point nothing has been committed or merged to `apache/master`.  If you are happy with the state of this local repo, then simply follow the instructions to push the changes to Apache.  If you are not happy, simply start over.  Nothing changes in Apache Land until you run the following command.
 
 ```
-cd /Users/nallen/tmp/incubator-metron
+cd /Users/nallen/tmp/metron
 git push upstream master
 ```
 
@@ -97,7 +97,7 @@ The `checkout-pr` script will checkout the branch for the specified pull request
 
 ```
 $ ./checkout-pr 80
-Cloning into 'incubator-metron-pr-80'...
+Cloning into 'metron-pr-80'...
 remote: Counting objects: 7028, done.
 remote: Compressing objects: 100% (56/56), done.
 remote: Total 7028 (delta 15), reused 0 (delta 0), pack-reused 6960
@@ -108,11 +108,11 @@ remote: Counting objects: 4, done.
 remote: Compressing objects: 100% (4/4), done.
 remote: Total 4 (delta 0), reused 0 (delta 0), pack-reused 0
 Unpacking objects: 100% (4/4), done.
-From http://github.com/apache/incubator-metron
+From http://github.com/apache/metron
  * [new ref]         refs/pull/80/head -> pr-80
 Switched to branch 'pr-80'
 
-$ cd incubator-metron-pr-80/
+$ cd metron-pr-80/
 
 $ git branch
   master
@@ -132,7 +132,7 @@ remote: Counting objects: 77, done.
 remote: Compressing objects: 100% (51/51), done.
 remote: Total 77 (delta 10), reused 2 (delta 2), pack-reused 0
 Unpacking objects: 100% (77/77), done.
-From http://github.com/apache/incubator-metron
+From http://github.com/apache/metron
  * [new ref]         refs/pull/81/head -> pr-81
 Switched to branch 'pr-81'
 
