@@ -57,14 +57,25 @@ APACHE_EMAIL=${APACHE_NAME}@apache.org
 read -p "  your apache email [$APACHE_EMAIL]: " INPUT
 [ -n "$INPUT" ] && APACHE_EMAIL=$INPUT
 
-echo ""
 mkdir -p $WORK
 cd $WORK
-rm -rf $WORK/metron
+LOCALREPO=metron-pr$PR
+
+# delete the local repo if it already exists
+if [ -d "$WORK/$LOCALREPO" ]; then
+	read -p "  directory exists [$WORK/$LOCALREPO].  delete? [yN] " -n 1 -r
+	echo    
+	if [[ $REPLY =~ ^[Yy]$ ]]; then
+		rm -rf $WORK/$LOCALREPO
+        else
+     		echo "Error: cannot overwrite [$WORK/$LOCALREPO]"
+		exit 1
+	fi
+fi
 
 # clone the repository and fetch updates
-git clone $ORIGIN metron
-cd $WORK/metron
+git clone $ORIGIN $LOCALREPO 
+cd $WORK/$LOCALREPO
 
 # setup the git user and email for your apache account
 git config user.name "$APACHE_NAME"
@@ -137,7 +148,6 @@ fi
 read -p "  commit message [$MSG]: " INPUT
 [ -n "$INPUT" ] && MSG=$INPUT
 
-
 # merge the contributor's branch and commit
 echo ""
 if git merge --squash "$PR_BRANCH"; then
@@ -155,6 +165,6 @@ git show --quiet --pretty=fuller HEAD
 
 echo ""
 echo "Review commit carefully then run..."
-echo "    cd $WORK/metron"
+echo "    cd $WORK/$LOCALREPO"
 echo "    git push upstream master"
 echo ""
