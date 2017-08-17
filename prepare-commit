@@ -40,7 +40,7 @@ if [ "$PR_EXISTS" != "200" ]; then
 fi
 
 # origin repository
-ORIGIN="http://github.com/apache/metron"
+ORIGIN="https://github.com/apache/metron"
 read -p "  origin repo [$ORIGIN]: " INPUT
 [ -n "$INPUT" ] && ORIGIN=$INPUT
 
