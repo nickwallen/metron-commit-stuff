@@ -64,17 +64,19 @@ LOCALREPO=metron-pr$PR
 # delete the local repo if it already exists
 if [ -d "$WORK/$LOCALREPO" ]; then
 	read -p "  directory exists [$WORK/$LOCALREPO].  delete? [yN] " -n 1 -r
-	echo    
+	echo
 	if [[ $REPLY =~ ^[Yy]$ ]]; then
 		rm -rf $WORK/$LOCALREPO
-        else
-     		echo "Error: cannot overwrite [$WORK/$LOCALREPO]"
+  else
+		echo "Error: cannot overwrite [$WORK/$LOCALREPO]"
 		exit 1
 	fi
 fi
 
 # clone the repository and fetch updates
-git clone $ORIGIN $LOCALREPO 
+echo ""
+echo ""
+git clone $ORIGIN $LOCALREPO
 cd $WORK/$LOCALREPO
 
 # setup the git user and email for your apache account
@@ -158,10 +160,24 @@ fi
 
 # review the commit
 echo ""
+echo ""
 git diff --stat --color "$DEST_BRANCH..upstream/$DEST_BRANCH"
-
+echo ""
 echo ""
 git show --quiet --pretty=fuller HEAD
+
+# run test suite?
+echo ""
+echo ""
+read -p "  run test suite? [yN] " -n 1 -r
+echo
+if [[ $REPLY =~ ^[Yy]$ ]]; then
+  mvn -q -T 2C -DskipTests clean install &&
+    mvn -q -T 2C surefire:test@unit-tests &&
+    mvn -q surefire:test@integration-tests &&
+    mvn -q test --projects metron-interface/metron-config &&
+    build_utils/verify_licenses.sh
+fi
 
 echo ""
 echo "Review commit carefully then run..."
