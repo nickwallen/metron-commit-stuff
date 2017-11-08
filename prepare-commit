@@ -16,9 +16,8 @@
 #
 
 # not likely to change
-WORK=~/tmp
 UPSTREAM=https://git-wip-us.apache.org/repos/asf/metron.git
-DEST_BRANCH=master
+BASE_BRANCH=master
 CONFIG_FILE=~/.metron-prepare-commit
 
 # does a config file already exist?
@@ -74,40 +73,47 @@ ORIGIN="https://github.com/apache/metron"
 read -p "  origin repo [$ORIGIN]: " INPUT
 [ -n "$INPUT" ] && ORIGIN=$INPUT
 
-mkdir -p $WORK
-cd $WORK
-LOCALREPO=metron-pr$PR
+# working directory
+WORK=~/tmp/metron-pr$PR
+read -p "  local working directory [$WORK]: " INPUT
+[ -n "$INPUT" ] && WORK=$INPUT
 
-# delete the local repo if it already exists
-if [ -d "$WORK/$LOCALREPO" ]; then
-  read -p "  directory exists [$WORK/$LOCALREPO].  delete? [yN] " -n 1 -r
+# handle tilde expansion
+WORK="${WORK/#\~/$HOME}"
+
+# warn the user if the working directory exists
+if [ -d "$WORK" ]; then
+  read -p "  directory exists [$WORK].  continue merge on existing repo? [yN] " -n 1 -r
   echo
-  if [[ $REPLY =~ ^[Yy]$ ]]; then
-    rm -rf $WORK/$LOCALREPO
-  else
-    echo "Error: cannot overwrite [$WORK/$LOCALREPO]"
+  if [[ ! $REPLY =~ ^[Yy]$ ]]; then
     exit 1
   fi
 fi
 
-# clone the repository and fetch updates
-git clone $ORIGIN $LOCALREPO
-cd $WORK/$LOCALREPO
+# if working directory does not exist, checkout the base branch
+if [ ! -d "$WORK" ]; then
 
-# setup the git user and email for your apache account
-git config user.name "$APACHE_NAME"
-git config user.email $APACHE_EMAIL
+  # clone the repository and fetch updates
+  mkdir -p $WORK
+  git clone $ORIGIN $WORK
+  cd $WORK
 
-# fetch any changes from upstream
-git remote add upstream $UPSTREAM
-git fetch upstream $DEST_BRANCH
+  # setup the git user and email for your apache account
+  git config user.name "$APACHE_NAME"
+  git config user.email $APACHE_EMAIL
 
-# merge any changes from upstream
-git checkout $DEST_BRANCH
-git merge upstream/$DEST_BRANCH
+  # fetch any changes from upstream
+  git remote add upstream $UPSTREAM
+  git fetch upstream $BASE_BRANCH
+
+  # merge any changes from upstream
+  git checkout $BASE_BRANCH
+  git merge upstream/$BASE_BRANCH
+fi
 
 PR_BRANCH_REF="pull/$PR/head:pr-$PR"
 PR_BRANCH="pr-$PR"
+cd $WORK
 git fetch origin $PR_BRANCH_REF
 echo ""
 
@@ -122,7 +128,7 @@ if [ -z "$USER" ]; then
   exit 1
 fi
 
-# attempt to use the github api to retrieve the user's email
+# retrieve the contributor's email from the git commit history
 EMAIL=`git log $PR_BRANCH | grep Author | head -1 | awk -F"<" '{print $2}' | sed 's/[<>]//g'`
 read -p "  github contributor's email [$EMAIL]: " INPUT
 [ -n "$INPUT" ] && EMAIL=$INPUT
@@ -176,10 +182,10 @@ fi
 # review the commit
 echo ""
 echo ""
-git diff --stat --color "$DEST_BRANCH..upstream/$DEST_BRANCH"
+git diff --stat --color "$BASE_BRANCH..upstream/$BASE_BRANCH"
 echo ""
 echo ""
-git show --quiet --pretty=fuller HEAD
+git log --oneline "$BASE_BRANCH" "^upstream/$BASE_BRANCH"
 
 # run tests?
 echo ""
@@ -196,7 +202,7 @@ fi
 
 echo ""
 echo "Review commit carefully then run..."
-echo "    cd $WORK/$LOCALREPO"
+echo "    cd $WORK"
 echo "    git push upstream master"
 echo ""
 
