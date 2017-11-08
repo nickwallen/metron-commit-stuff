@@ -1,4 +1,3 @@
-#/usr/local/bin bash
 #
 #  Licensed to the Apache Software Foundation (ASF) under one or more
 #  contributor license agreements.  See the NOTICE file distributed with
@@ -16,14 +15,45 @@
 #  limitations under the License.
 #
 
-# github account of committer (you!)
-GITHUB_NAME=nickwallen
-APACHE_NAME=nickallen
-
 # not likely to change
 WORK=~/tmp
 UPSTREAM=https://git-wip-us.apache.org/repos/asf/metron.git
 DEST_BRANCH=master
+CONFIG_FILE=~/.metron-prepare-commit
+
+# does a config file already exist?
+if [ -f $CONFIG_FILE ]; then
+  . $CONFIG_FILE
+  echo "  ...using settings from $CONFIG_FILE"
+fi
+
+# github account of committer (you)
+if [ -z "$GITHUB_NAME" ]; then
+  read -p "  your github username [$GITHUB_NAME]: " INPUT
+  [ -n "$INPUT" ] && GITHUB_NAME=$INPUT
+  
+  # write setting to config file
+  echo "GITHUB_NAME=$GITHUB_NAME" >> $CONFIG_FILE
+fi
+
+# apache id of committer (you)
+if [ -z "$APACHE_NAME" ]; then
+  read -p "  your apache userid [$APACHE_NAME]: " INPUT
+  [ -n "$INPUT" ] && APACHE_NAME=$INPUT
+
+  # write setting to config file
+  echo "APACHE_NAME=$APACHE_NAME" >> $CONFIG_FILE
+fi
+
+# apache email addr of committer (you)
+if [ -z "$APACHE_EMAIL" ]; then
+  APACHE_EMAIL=${APACHE_NAME}@apache.org
+  read -p "  your apache email [$APACHE_EMAIL]: " INPUT
+  [ -n "$INPUT" ] && APACHE_EMAIL=$INPUT
+
+  # write setting to config file, so it is not needed next time
+  echo "APACHE_EMAIL=$APACHE_EMAIL" >> $CONFIG_FILE
+fi
 
 # retrieve the pull request identifier
 read -p "  pull request: " PR
@@ -44,38 +74,23 @@ ORIGIN="https://github.com/apache/metron"
 read -p "  origin repo [$ORIGIN]: " INPUT
 [ -n "$INPUT" ] && ORIGIN=$INPUT
 
-# github account of committer (you)
-read -p "  your github username [$GITHUB_NAME]: " INPUT
-[ -n "$INPUT" ] && GITHUB_NAME=$INPUT
-
-# apache id of committer (you)
-read -p "  your apache userid [$APACHE_NAME]: " INPUT
-[ -n "$INPUT" ] && APACHE_NAME=$INPUT
-
-# apache email addr of committer (you)
-APACHE_EMAIL=${APACHE_NAME}@apache.org
-read -p "  your apache email [$APACHE_EMAIL]: " INPUT
-[ -n "$INPUT" ] && APACHE_EMAIL=$INPUT
-
 mkdir -p $WORK
 cd $WORK
 LOCALREPO=metron-pr$PR
 
 # delete the local repo if it already exists
 if [ -d "$WORK/$LOCALREPO" ]; then
-	read -p "  directory exists [$WORK/$LOCALREPO].  delete? [yN] " -n 1 -r
-	echo
-	if [[ $REPLY =~ ^[Yy]$ ]]; then
-		rm -rf $WORK/$LOCALREPO
+  read -p "  directory exists [$WORK/$LOCALREPO].  delete? [yN] " -n 1 -r
+  echo
+  if [[ $REPLY =~ ^[Yy]$ ]]; then
+    rm -rf $WORK/$LOCALREPO
   else
-		echo "Error: cannot overwrite [$WORK/$LOCALREPO]"
-		exit 1
-	fi
+    echo "Error: cannot overwrite [$WORK/$LOCALREPO]"
+    exit 1
+  fi
 fi
 
 # clone the repository and fetch updates
-echo ""
-echo ""
 git clone $ORIGIN $LOCALREPO
 cd $WORK/$LOCALREPO
 
@@ -166,7 +181,7 @@ echo ""
 echo ""
 git show --quiet --pretty=fuller HEAD
 
-# run test suite?
+# run tests?
 echo ""
 echo ""
 read -p "  run test suite? [yN] " -n 1 -r
@@ -184,3 +199,4 @@ echo "Review commit carefully then run..."
 echo "    cd $WORK/$LOCALREPO"
 echo "    git push upstream master"
 echo ""
+
