@@ -1,4 +1,3 @@
-#/usr/local/bin bash
 #
 #  Licensed to the Apache Software Foundation (ASF) under one or more
 #  contributor license agreements.  See the NOTICE file distributed with
@@ -16,14 +15,44 @@
 #  limitations under the License.
 #
 
-# github account of committer (you!)
-GITHUB_NAME=nickwallen
-APACHE_NAME=nickallen
-
 # not likely to change
-WORK=~/tmp
 UPSTREAM=https://git-wip-us.apache.org/repos/asf/metron.git
-DEST_BRANCH=master
+BASE_BRANCH=master
+CONFIG_FILE=~/.metron-prepare-commit
+
+# does a config file already exist?
+if [ -f $CONFIG_FILE ]; then
+  . $CONFIG_FILE
+  echo "  ...using settings from $CONFIG_FILE"
+fi
+
+# github account of committer (you)
+if [ -z "$GITHUB_NAME" ]; then
+  read -p "  your github username [$GITHUB_NAME]: " INPUT
+  [ -n "$INPUT" ] && GITHUB_NAME=$INPUT
+  
+  # write setting to config file
+  echo "GITHUB_NAME=$GITHUB_NAME" >> $CONFIG_FILE
+fi
+
+# apache id of committer (you)
+if [ -z "$APACHE_NAME" ]; then
+  read -p "  your apache userid [$APACHE_NAME]: " INPUT
+  [ -n "$INPUT" ] && APACHE_NAME=$INPUT
+
+  # write setting to config file
+  echo "APACHE_NAME=$APACHE_NAME" >> $CONFIG_FILE
+fi
+
+# apache email addr of committer (you)
+if [ -z "$APACHE_EMAIL" ]; then
+  APACHE_EMAIL=${APACHE_NAME}@apache.org
+  read -p "  your apache email [$APACHE_EMAIL]: " INPUT
+  [ -n "$INPUT" ] && APACHE_EMAIL=$INPUT
+
+  # write setting to config file, so it is not needed next time
+  echo "APACHE_EMAIL=$APACHE_EMAIL" >> $CONFIG_FILE
+fi
 
 # retrieve the pull request identifier
 read -p "  pull request: " PR
@@ -40,46 +69,51 @@ if [ "$PR_EXISTS" != "200" ]; then
 fi
 
 # origin repository
-ORIGIN="http://github.com/apache/metron"
+ORIGIN="https://github.com/apache/metron"
 read -p "  origin repo [$ORIGIN]: " INPUT
 [ -n "$INPUT" ] && ORIGIN=$INPUT
 
-# github account of committer (you)
-read -p "  your github username [$GITHUB_NAME]: " INPUT
-[ -n "$INPUT" ] && GITHUB_NAME=$INPUT
+# working directory
+WORK=~/tmp/metron-pr$PR
+read -p "  local working directory [$WORK]: " INPUT
+[ -n "$INPUT" ] && WORK=$INPUT
 
-# apache id of committer (you)
-read -p "  your apache userid [$APACHE_NAME]: " INPUT
-[ -n "$INPUT" ] && APACHE_NAME=$INPUT
+# handle tilde expansion
+WORK="${WORK/#\~/$HOME}"
 
-# apache email addr of committer (you)
-APACHE_EMAIL=${APACHE_NAME}@apache.org
-read -p "  your apache email [$APACHE_EMAIL]: " INPUT
-[ -n "$INPUT" ] && APACHE_EMAIL=$INPUT
+# warn the user if the working directory exists
+if [ -d "$WORK" ]; then
+  read -p "  directory exists [$WORK].  continue merge on existing repo? [yN] " -n 1 -r
+  echo
+  if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+    exit 1
+  fi
+fi
 
-echo ""
-mkdir -p $WORK
-cd $WORK
-rm -rf $WORK/metron
+# if working directory does not exist, checkout the base branch
+if [ ! -d "$WORK" ]; then
 
-# clone the repository and fetch updates
-git clone $ORIGIN metron
-cd $WORK/metron
+  # clone the repository and fetch updates
+  mkdir -p $WORK
+  git clone $ORIGIN $WORK
+  cd $WORK
 
-# setup the git user and email for your apache account
-git config user.name "$APACHE_NAME"
-git config user.email $APACHE_EMAIL
+  # setup the git user and email for your apache account
+  git config user.name "$APACHE_NAME"
+  git config user.email $APACHE_EMAIL
 
-# fetch any changes from upstream
-git remote add upstream $UPSTREAM
-git fetch upstream $DEST_BRANCH
+  # fetch any changes from upstream
+  git remote add upstream $UPSTREAM
+  git fetch upstream $BASE_BRANCH
 
-# merge any changes from upstream
-git checkout $DEST_BRANCH
-git merge upstream/$DEST_BRANCH
+  # merge any changes from upstream
+  git checkout $BASE_BRANCH
+  git merge upstream/$BASE_BRANCH
+fi
 
 PR_BRANCH_REF="pull/$PR/head:pr-$PR"
 PR_BRANCH="pr-$PR"
+cd $WORK
 git fetch origin $PR_BRANCH_REF
 echo ""
 
@@ -94,7 +128,7 @@ if [ -z "$USER" ]; then
   exit 1
 fi
 
-# attempt to use the github api to retrieve the user's email
+# retrieve the contributor's email from the git commit history
 EMAIL=`git log $PR_BRANCH | grep Author | head -1 | awk -F"<" '{print $2}' | sed 's/[<>]//g'`
 read -p "  github contributor's email [$EMAIL]: " INPUT
 [ -n "$INPUT" ] && EMAIL=$INPUT
@@ -137,7 +171,6 @@ fi
 read -p "  commit message [$MSG]: " INPUT
 [ -n "$INPUT" ] && MSG=$INPUT
 
-
 # merge the contributor's branch and commit
 echo ""
 if git merge --squash "$PR_BRANCH"; then
@@ -148,13 +181,28 @@ fi
 
 # review the commit
 echo ""
-git diff --stat --color "$DEST_BRANCH..upstream/$DEST_BRANCH"
-
 echo ""
-git show --quiet --pretty=fuller HEAD
+git diff --stat --color "$BASE_BRANCH..upstream/$BASE_BRANCH"
+echo ""
+echo ""
+git log --oneline "$BASE_BRANCH" "^upstream/$BASE_BRANCH"
+
+# run tests?
+echo ""
+echo ""
+read -p "  run test suite? [yN] " -n 1 -r
+echo
+if [[ $REPLY =~ ^[Yy]$ ]]; then
+  mvn -q -T 2C -DskipTests clean install &&
+    mvn -q -T 2C surefire:test@unit-tests &&
+    mvn -q surefire:test@integration-tests &&
+    mvn -q test --projects metron-interface/metron-config &&
+    build_utils/verify_licenses.sh
+fi
 
 echo ""
 echo "Review commit carefully then run..."
-echo "    cd $WORK/metron"
+echo "    cd $WORK"
 echo "    git push upstream master"
 echo ""
+
