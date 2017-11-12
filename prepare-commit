@@ -182,7 +182,7 @@ fi
 # review the commit
 echo ""
 echo ""
-git diff --stat --color "$BASE_BRANCH..upstream/$BASE_BRANCH"
+git diff --stat --color "upstream/$BASE_BRANCH..$BASE_BRANCH"
 echo ""
 echo ""
 git log --oneline "$BASE_BRANCH" "^upstream/$BASE_BRANCH"
