@@ -1,4 +1,4 @@
-#/usr/local/bin bash
+#!/usr/bin/env bash
 #
 #  Licensed to the Apache Software Foundation (ASF) under one or more
 #  contributor license agreements.  See the NOTICE file distributed with
@@ -16,7 +16,11 @@
 #  limitations under the License.
 #
 
-ORIGIN="http://github.com/apache/metron"
+# Standard instantiations
+METRON_ORIGIN="https://github.com/apache/metron"
+METRON_ORIGIN_no_proto="${METRON_ORIGIN#*://}"
+BRO_PLUGIN_ORIGIN="https://github.com/apache/metron-bro-plugin-kafka"
+BRO_PLUGIN_ORIGIN_no_proto="${BRO_PLUGIN_ORIGIN#*://}"
 
 if [ "$#" -ne 1 ]; then
     echo "error: missing argument"
@@ -26,14 +30,60 @@ else
     PR_NUMBER="$1"
 fi
 
+# which repo?  metron or metron-bro-plugin-kafka
+read -p "  which repo? [metron]: " INPUT
+case "${INPUT}" in
+  [Bb][Rr][Oo]|[Mm][Ee][Tt][Rr][Oo][Nn]-[Bb][Rr][Oo]-[Pp][Ll][Uu][Gg][Ii][Nn]-[Kk][Aa][Ff][Kk][Aa]|*metron-bro-plugin-kafka\.git)
+    SELECTED_ORIGIN="${BRO_PLUGIN_ORIGIN}"
+    SELECTED_ORIGIN_no_proto="${SELECTED_ORIGIN#*://}";;
+  [Mm][Ee][Tt][Rr][Oo][Nn]|*metron\.git|'')
+    SELECTED_ORIGIN="${METRON_ORIGIN}"
+    SELECTED_ORIGIN_no_proto="${SELECTED_ORIGIN#*://}";;
+  *)
+    echo "Invalid repo, provided \"${INPUT}\".  Please choose between metron or metron-bro-plugin-kafka"
+    exit 1
+    ;;
+esac
 
-# if we do not already have a cloned repo, create it
-CURR_ORIGIN=`git remote -v | grep origin | head -1 | awk '{print $2}'`
-if [ "$ORIGIN" != "$CURR_ORIGIN" ]; then
-  git clone $ORIGIN metron-pr-$PR_NUMBER
-  cd metron-pr-$PR_NUMBER
+# Check the origin of the current directory
+CURR_ORIGIN=`git remote -v 2>/dev/null | grep origin | head -1 | awk '{print $2}'`
+CURR_ORIGIN_no_proto="${CURR_ORIGIN#*://}"
+
+# Warn if in a metron-related repo, but not the expected one
+if [[ "${CURR_ORIGIN_no_proto}" == "${METRON_ORIGIN_no_proto}" && "${SELECTED_ORIGIN}" == "${BRO_PLUGIN_ORIGIN}" ]]; then
+  read -p "  WARN:  You are in a metron repo but checking out a metron-bro-plugin-kafka pr.  Continue? [yN] " -n 1 -r
+  echo
+  if [[ ! $REPLY =~ ^[Yy]$ ]]; then exit 1; fi
+elif [[ "${CURR_ORIGIN_no_proto}" == "${BRO_PLUGIN_ORIGIN_no_proto}" && "${SELECTED_ORIGIN}" == "${METRON_ORIGIN}" ]]; then
+  read -p "  WARN:  You are in a metron-bro-plugin-kafka repo but checking out a metron pr.  Continue? [yN] " -n 1 -r
+  echo
+  if [[ ! $REPLY =~ ^[Yy]$ ]]; then exit 1; fi
+fi
+
+# If we're not in the same repo that we want to work with, clone it appropriately
+if [[ "${SELECTED_ORIGIN_no_proto}" != "${CURR_ORIGIN_no_proto}"  ]]; then
+  if [[ "${SELECTED_ORIGIN_no_proto}" == "${METRON_ORIGIN_no_proto}" ]]; then
+    git clone $METRON_ORIGIN metron-pr$PR_NUMBER
+    cd metron-pr$PR_NUMBER
+  elif [[ "${SELECTED_ORIGIN_no_proto}" == "${BRO_PLUGIN_ORIGIN_no_proto}" ]]; then
+    git clone $BRO_PLUGIN_ORIGIN metron-bro-plugin-kafka-pr$PR_NUMBER
+    cd metron-bro-plugin-kafka-pr$PR_NUMBER
+  fi
+fi
+
+# Warn that folder naming could get confusing
+if [[ ( "${SELECTED_ORIGIN##*/}" == "${METRON_ORIGIN##*/}" && "${PWD##*/}" != "metron-pr$PR_NUMBER" && "${PWD##*/}" =~ metron-pr[0-9]+ ) || ( "${SELECTED_ORIGIN##*/}" == "${BRO_PLUGIN_ORIGIN##*/}" && "${PWD##*/}" != "metron-bro-plugin-kafka-pr$PR_NUMBER" && "${PWD##*/}" =~ metron-bro-plugin-kafka-pr[0-9]+ ) ]]; then
+  echo "  WARN:  You are checking out a PR which is different than the PR in your current working directory.  Things could get confusing."
+  read -p "  WARN:  This will merge PR ${PR_NUMBER} into the folder ${PWD##*/}.  Continue? [yN] " -n 1 -r
+  echo
+  if [[ ! $REPLY =~ ^[Yy]$ ]]; then exit 1; fi
 fi
 
 # fetch the PR and switch to it
-git fetch origin pull/$PR_NUMBER/head:pr-$PR_NUMBER
+if [[ "${SELECTED_ORIGIN_no_proto}" == "${METRON_ORIGIN_no_proto}" ]]; then
+  git fetch ${METRON_ORIGIN} pull/$PR_NUMBER/head:pr-$PR_NUMBER
+elif [[ "${SELECTED_ORIGIN_no_proto}" == "${BRO_PLUGIN_ORIGIN_no_proto}" ]]; then
+  git fetch ${BRO_PLUGIN_ORIGIN} pull/$PR_NUMBER/head:pr-$PR_NUMBER
+fi
 git checkout pr-$PR_NUMBER
+
