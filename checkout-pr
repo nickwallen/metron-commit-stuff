@@ -31,7 +31,9 @@ else
 fi
 
 # which repo?  metron or metron-bro-plugin-kafka
-read -p "  which repo? [metron]: " INPUT
+echo "  1) metron"
+echo "  2) metron-bro-plugin-kafka"
+read -p "Please select a repository [metron]: " INPUT
 case "${INPUT}" in
   [Bb][Rr][Oo]|[Mm][Ee][Tt][Rr][Oo][Nn]-[Bb][Rr][Oo]-[Pp][Ll][Uu][Gg][Ii][Nn]-[Kk][Aa][Ff][Kk][Aa]|*metron-bro-plugin-kafka\.git)
     SELECTED_ORIGIN="${BRO_PLUGIN_ORIGIN}"
