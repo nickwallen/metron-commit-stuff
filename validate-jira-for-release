@@ -1,11 +1,18 @@
 #!/bin/bash
+#
+# Finds all commits since the last release tag, then ensures that each
+# is marked 'Done' and that the fix version == $NEXT_RELEASE.
+#
 
+#
+# update LAST_RELEASE_TAG and NEXT_RELEASE as needed
+#
 LAST_RELEASE_TAG="apache-metron-0.4.1-release"
 NEXT_RELEASE="0.4.2"
 REPO="https://git-wip-us.apache.org/repos/asf/metron.git"
 WORKDIR=`pwd`
 
-
+# clone the metron repo and fetch all tags
 git clone $REPO "metron-$NEXT_RELEASE"
 cd "$WORKDIR/metron-$NEXT_RELEASE"
 git fetch --all --tags
