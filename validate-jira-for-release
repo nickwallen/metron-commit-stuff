@@ -2,6 +2,13 @@
 
 LAST_RELEASE_TAG="apache-metron-0.4.1-release"
 NEXT_RELEASE="0.4.2"
+REPO="https://git-wip-us.apache.org/repos/asf/metron.git"
+WORKDIR=`pwd`
+
+
+git clone $REPO "metron-$NEXT_RELEASE"
+cd "$WORKDIR/metron-$NEXT_RELEASE"
+git fetch --all --tags
 
 # find all JIRAs that have been committed since the last release
 GET_JIRAS="git log tags/$LAST_RELEASE_TAG..HEAD --oneline | grep -E -o 'METRON[- ]*[0-9]+'"
